@@ -1,7 +1,7 @@
 # EP-Backend_MongoDB · Base de datos MongoDB
 
 Repositorio **3 de 3** de **Mythos Coworking · Sistema de Gestión de Reservas**. Contiene los scripts de
-MongoDB: el **archivo de esquemas** (colecciones, validadores e índices) y la **carga inicial** (`insertMany`).
+MongoDB: el **archivo de esquemas** (colecciones, validadores e índices) y la **carga inicial** (`insertOne` e `insertMany`).
 
 | Repositorio | Contenido |
 | --- | --- |
@@ -23,23 +23,60 @@ MongoDB: el **archivo de esquemas** (colecciones, validadores e índices) y la *
 
 ```text
 EP-Backend_MongoDB/
+├── .env.example       # Plantilla de conexión (copiar a .env)
+├── package.json       # Dependencias y comandos npm
+├── inicializar.js     # Ejecuta esquema y carga inicial en orden
 ├── esquemas.js        # Archivo de esquemas: colecciones, validadores $jsonSchema e índices
-├── carga_inicial.js   # Carga inicial con insertMany (logs de ejemplo)
+├── carga_inicial.js   # Carga inicial con insertOne e insertMany (logs de ejemplo)
 └── README.md
 ```
 
 ## Ejecución
 
-```bash
-mongosh "mongodb://127.0.0.1:27017" esquemas.js
-mongosh "mongodb://127.0.0.1:27017" carga_inicial.js
+Requiere Node.js 20.19 o superior y un servidor MongoDB disponible.
+Abre una terminal en la carpeta de este repositorio:
+
+```powershell
+npm install
+Copy-Item .env.example .env
 ```
 
-Con MongoDB Atlas, reemplazar la URI por `mongodb+srv://usuario:clave@cluster.xxxxx.mongodb.net`.
-Desde MongoDB Compass: pestaña **_MONGOSH** → `load("C:/ruta/al/repositorio/esquemas.js")` y luego `carga_inicial.js`.
+Si ya tienes `.env`, conserva tu archivo. Edita sus valores según tu servidor:
 
-La API (EP-Backend) también crea estas colecciones, con los mismos validadores e índices, al arrancar o con
-`npm run db:setup`. Por eso este script es **re-ejecutable**: si la colección ya existe, solo actualiza su validador.
+```dotenv
+MONGO_URI=mongodb://127.0.0.1:27017
+MONGO_DATABASE=MythosLogs
+```
+
+Para Atlas o un servidor con autenticación, usa la URI correspondiente en `MONGO_URI`.
+El archivo `.env` está excluido de Git; `.env.example` es la plantilla sin credenciales.
+El nombre de la base debe coincidir con `MONGO_DATABASE` de la API.
+
+Ejecuta:
+
+```powershell
+npm start
+```
+
+`inicializar.js` lee las variables cargadas desde `.env`, abre una conexión con `MongoClient`
+y selecciona la base configurada. Después ejecuta, en orden:
+
+1. `crearEsquemas(base)` de `esquemas.js`: colecciones, validadores e índices.
+2. `cargarDatosIniciales(base)` de `carga_inicial.js`: cuatro logs de ejemplo, uno con `insertOne` y tres con `insertMany`.
+
+Al terminar cierra la conexión. Si ocurre un error, termina con código de error.
+Los archivos `esquemas.js` y `carga_inicial.js` son funciones usadas por el inicializador;
+no se ejecutan con `mongosh` ni se conectan por separado.
+
+No se borran documentos. Si repites la inicialización, se agregan otros cuatro logs.
+Los comentarios quedan vacíos hasta que se creen desde la API, para usar códigos reales de salas y usuarios.
+Ejecuta este comando antes de iniciar la API: la API no crea ni actualiza la estructura de MongoDB.
+
+Para verificar los scripts sin conectarse al servidor:
+
+```powershell
+npm test
+```
 
 ## Base `MythosLogs`
 
@@ -97,7 +134,7 @@ SQL Server. Antes de insertar, la API verifica en SQL Server que la sala y el us
 
 ## Carga inicial
 
-`carga_inicial.js` inserta con `insertMany` tres logs de ejemplo (`sistema`, `peticion` y `auditoria`), cada uno
+`carga_inicial.js` inserta primero un log de tipo `sistema` con `insertOne`. Después inserta con `insertMany` otros tres logs de ejemplo (`sistema`, `peticion` y `auditoria`), cada uno
 con una forma distinta en `datos`, para mostrar el esquema flexible.
 
 ## Consultas útiles

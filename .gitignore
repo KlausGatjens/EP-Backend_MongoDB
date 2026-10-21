@@ -3,3 +3,7 @@
 Thumbs.db
 .vscode/
 .idea/
+
+# Configuración local y dependencias
+.env
+node_modules/
